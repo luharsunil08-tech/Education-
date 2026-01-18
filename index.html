@@ -4,10 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BharatEdu - Focus & Excellence</title>
+    <title>BharatEdu - Chanakya AI Study Platform</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="BharatEdu - Chanakya AI Study Platform">
+    <meta name="description" content="Free all-in-one study platform for Indian students. JEE, NEET, Boards, and Govt exams with Chanakya AI Tutor.">
+    <meta name="theme-color" content="#4f46e5">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://bharatedu.netlify.app/">
+    <meta property="og:title" content="BharatEdu - Chanakya AI Study Platform">
+    <meta property="og:description" content="Master your exams with Chanakya, the AI Guru. Free tests, revision notes, and doubt solving.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1000&auto=format&fit=crop">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="BharatEdu - Chanakya AI Study Platform">
+    <meta property="twitter:description" content="Free all-in-one study platform for Indian students. Master JEE, NEET & Boards.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="/manifest.json">
+    
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
       
@@ -28,6 +50,7 @@
         background-color: var(--soft-grey);
         color: #1e293b;
         transition: background-color 0.3s ease, color 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .dark body {
@@ -50,26 +73,17 @@
         box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
       }
 
-      .transition-all-300 {
-        transition: all 0.3s ease;
-      }
-
-      /* Focus Mode styles */
-      .focus-active {
-        overflow: hidden;
-      }
-      
       /* Micro-animations */
       .tap-active:active {
-        transform: scale(0.98);
+        transform: scale(0.96);
       }
 
-      @keyframes pulse-soft {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
-      .animate-pulse-soft {
-        animation: pulse-soft 2s infinite;
+      .animate-slide-up {
+        animation: slideUp 0.4s ease-out forwards;
       }
     </style>
 <script type="importmap">
