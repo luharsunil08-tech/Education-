@@ -1,0 +1,8 @@
+{
+  "name": "BharatEdu - Ultimate All-in-One Study Platform",
+  "description": "A comprehensive, free education platform for Indian students focusing on JEE, NEET, Boards, and Govt exams with Chanakya, your AI-powered live tutor.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
