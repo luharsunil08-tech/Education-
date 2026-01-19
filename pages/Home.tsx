@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import ChanakyaLive from '../components/ChanakyaLive';
+import ChanakyaLive from '../components/ChanakyaLive.tsx';
 
 interface HomeProps {
   name: string;
@@ -11,8 +11,9 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mistakeCount }) => {
-  const [examCountdown] = useState(142);
   const [showLive, setShowLive] = useState(false);
+  const [motivation, setMotivation] = useState<{ quote: string; author: string } | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
   const [goals, setGoals] = useState([
     { id: 1, text: 'Complete Chapter Summary', done: false },
     { id: 2, text: 'Solve 5 PYQs', done: true },
@@ -20,6 +21,20 @@ const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mis
   ]);
 
   const dailyQuestion = "If a matrix A is symmetric, then its transpose A' is equal to?";
+
+  const fetchMotivation = async () => {
+    setIsFetching(true);
+    try {
+      // Using a reliable public API for wisdom/quotes
+      const response = await fetch('https://dummyjson.com/quotes/random');
+      const data = await response.json();
+      setMotivation({ quote: data.quote, author: data.author });
+    } catch (error) {
+      setMotivation({ quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" });
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const toggleGoal = (id: number) => {
     setGoals(goals.map(g => g.id === id ? { ...g, done: !g.done } : g));
@@ -29,6 +44,44 @@ const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mis
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {showLive && <ChanakyaLive onClose={() => setShowLive(false)} />}
       
+      {/* External API Integration: Guru's Motivation Button */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-amber-500 to-orange-600 p-6 rounded-[32px] shadow-xl shadow-orange-100 dark:shadow-none group">
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group-hover:scale-125 transition-transform duration-700">
+          <i className="fa-solid fa-om text-[120px]"></i>
+        </div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-white">
+            <h3 className="text-xl font-black font-heading uppercase tracking-tighter">Guru's Blessing</h3>
+            <p className="text-xs text-amber-100 font-bold uppercase tracking-widest mt-1">Daily dose of wisdom for the dedicated scholar</p>
+          </div>
+          
+          <button 
+            onClick={fetchMotivation}
+            disabled={isFetching}
+            className={`bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95 flex items-center gap-3 ${isFetching ? 'opacity-70 animate-pulse' : 'hover:bg-amber-50'}`}
+          >
+            {isFetching ? (
+              <i className="fa-solid fa-spinner animate-spin"></i>
+            ) : (
+              <i className="fa-solid fa-hands-praying"></i>
+            )}
+            {isFetching ? 'Invoking...' : 'Receive Motivation'}
+          </button>
+        </div>
+
+        {motivation && (
+          <div className="mt-6 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl animate-in zoom-in-95 duration-300">
+            <p className="text-lg text-white font-serif italic font-medium leading-relaxed">
+              "{motivation.quote}"
+            </p>
+            <p className="text-right text-amber-200 text-xs font-black uppercase tracking-widest mt-4">
+              — {motivation.author}
+            </p>
+          </div>
+        )}
+      </section>
+
       {/* Welcome & Global Focus */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">

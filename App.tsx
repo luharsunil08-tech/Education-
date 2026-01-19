@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import Layout from './components/Layout';
-import Home from './pages/Home';
-import Exams from './pages/Exams';
-import AIChat from './pages/AIChat';
-import GK from './pages/GK';
-import Profile from './pages/Profile';
-import Login from './pages/Login';
-import Mistakes from './pages/Mistakes';
-import RapidRevision from './pages/RapidRevision';
+import Layout from './components/Layout.tsx';
+import Home from './pages/Home.tsx';
+import Exams from './pages/Exams.tsx';
+import AIChat from './pages/AIChat.tsx';
+import GK from './pages/GK.tsx';
+import Profile from './pages/Profile.tsx';
+import Login from './pages/Login.tsx';
+import Mistakes from './pages/Mistakes.tsx';
+import RapidRevision from './pages/RapidRevision.tsx';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -60,7 +60,7 @@ const App: React.FC = () => {
       case 'exams': return <Exams onAskAI={askAI} onMistake={addMistake} examLevel={globalExam} />;
       case 'chat': return <AIChat pendingDoubt={pendingDoubt} clearPendingDoubt={() => setPendingDoubt(null)} examLevel={globalExam} />;
       case 'gk': return <GK />;
-      case 'profile': return <Profile name={userName} />;
+      case 'profile': return <Profile />;
       case 'mistakes': return <Mistakes mistakes={mistakes} onAskAI={askAI} onClear={() => setMistakes([])} />;
       case 'rapid': return <RapidRevision examLevel={globalExam} onAskAI={askAI} />;
       default: return <Home name={userName} onAskAI={askAI} onStartRapid={() => setActiveTab('rapid')} examLevel={globalExam} mistakeCount={mistakes.length} />;
