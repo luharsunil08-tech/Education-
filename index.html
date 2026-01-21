@@ -9,52 +9,55 @@
     <!-- Primary Meta Tags -->
     <meta name="title" content="BharatEdu - Chanakya AI Study Platform">
     <meta name="description" content="Free all-in-one study platform for Indian students. JEE, NEET, Boards, and Govt exams with Chanakya AI Tutor.">
-    <meta name="theme-color" content="#4f46e5">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://bharatedu.netlify.app/">
-    <meta property="og:title" content="BharatEdu - Chanakya AI Study Platform">
-    <meta property="og:description" content="Master your exams with Chanakya, the AI Guru. Free tests, revision notes, and doubt solving.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1000&auto=format&fit=crop">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="BharatEdu - Chanakya AI Study Platform">
-    <meta property="twitter:description" content="Free all-in-one study platform for Indian students. Master JEE, NEET & Boards.">
+    <meta name="theme-color" content="#0B2B26">
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="/manifest.json">
     
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                primary: '#0B2B26',   // Deep Teal
+                secondary: '#163832', // Forest Teal
+                accent: '#8EB69B',    // Fresh Mint
+                sage: '#235347',      // Sage Green
+                lightBg: '#DAF1DE',   // Soft Mint
+                darkBg: '#051F20',    // Dark Charcoal Green
+                text: '#0F1F1C',      // Primary Text
+                muted: '#4F6F68',     // Secondary Text
+                gold: '#C8A951',      // Soft Gold
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              heading: ['Poppins', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
       
-      :root {
-        --focus-blue: #1e1b4b;
-        --accent-green: #10b981;
-        --accent-orange: #f59e0b;
-        --soft-grey: #f8fafc;
-      }
-
-      .dark {
-        --focus-blue: #0f172a;
-        --soft-grey: #020617;
-      }
-
       body {
         font-family: 'Inter', sans-serif;
-        background-color: var(--soft-grey);
-        color: #1e293b;
+        background-color: #DAF1DE; /* Soft Mint */
+        color: #0F1F1C; /* Primary Text */
         transition: background-color 0.3s ease, color 0.3s ease;
         -webkit-tap-highlight-color: transparent;
       }
 
       .dark body {
-        color: #f1f5f9;
+        background-color: #051F20; /* Dark Charcoal Green */
+        color: #DAF1DE;
       }
 
       h1, h2, h3, h4, .font-heading {
@@ -66,11 +69,11 @@
       }
 
       .card-shadow {
-        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 20px -5px rgba(11, 43, 38, 0.1);
       }
 
       .dark .card-shadow {
-        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.4);
       }
 
       /* Micro-animations */
@@ -98,7 +101,7 @@
 }
 </script>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950">
+<body class="bg-brand-lightBg dark:bg-brand-darkBg">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
 </body>

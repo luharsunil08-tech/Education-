@@ -9,6 +9,8 @@ import Profile from './pages/Profile.tsx';
 import Login from './pages/Login.tsx';
 import KnowledgeVault from './pages/KnowledgeVault.tsx';
 import RapidRevision from './pages/RapidRevision.tsx';
+import Courses from './pages/Courses.tsx';
+import CoursePlayer from './pages/CoursePlayer.tsx';
 import { Bookmark } from './types.ts';
 
 const App: React.FC = () => {
@@ -18,6 +20,7 @@ const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [pendingDoubt, setPendingDoubt] = useState<{ query: string, mode: string } | null>(null);
   const [globalExam, setGlobalExam] = useState('JEE/NEET');
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
   
   const [mistakes, setMistakes] = useState<any[]>(() => {
     const saved = localStorage.getItem('mistakes');
@@ -64,6 +67,11 @@ const App: React.FC = () => {
     setActiveTab('chat');
   };
 
+  const handleSelectCourse = (course: any) => {
+    setSelectedCourse(course);
+    setActiveTab('course-player');
+  };
+
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;
   }
@@ -77,6 +85,8 @@ const App: React.FC = () => {
     switch (activeTab) {
       case 'home': return <Home name={userName} onAskAI={askAI} onStartRapid={() => setActiveTab('rapid')} examLevel={globalExam} mistakeCount={mistakes.length} />;
       case 'exams': return <Exams onAskAI={(q) => askAI(q, 'detailed')} onMistake={addMistake} examLevel={globalExam} />;
+      case 'courses': return <Courses examLevel={globalExam} onSelectCourse={handleSelectCourse} />;
+      case 'course-player': return <CoursePlayer course={selectedCourse} onBack={() => setActiveTab('courses')} />;
       case 'chat': return <AIChat pendingDoubt={pendingDoubt} clearPendingDoubt={() => setPendingDoubt(null)} examLevel={globalExam} onBookmark={addBookmark} />;
       case 'gk': return <GK />;
       case 'profile': return <Profile />;

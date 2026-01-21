@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generateDailyQuestion, solveDoubt } from '../services/geminiService.ts';
 
 interface HomeProps {
   name: string;
-  onAskAI: (text: string, mode?: any) => void;
+  onAskAI: (text: string, mode?: any, media?: any) => void;
   onStartRapid: () => void;
   examLevel: string;
   mistakeCount: number;
@@ -14,6 +14,7 @@ const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mis
   const [dailyQuestion, setDailyQuestion] = useState<string>("Invoking Chanakya's wisdom...");
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const initDaily = async () => {
@@ -23,10 +24,6 @@ const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mis
     initDaily();
   }, [examLevel]);
 
-  const handleIntent = async (intent: string, label: string) => {
-    onAskAI(`Generate ${label}`, intent as any);
-  };
-
   const handleAnalysis = async () => {
     setIsLoading(true);
     const result = await solveDoubt(`Analyze my progress. I have ${mistakeCount} mistakes in my notebook. Level: ${examLevel}.`, [], 'progress_analysis', examLevel);
@@ -34,135 +31,163 @@ const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mis
     setIsLoading(false);
   };
 
+  const handleVisualDoubt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        onAskAI("Please solve this visual doubt.", "detailed", {
+          base64: (reader.result as string).split(',')[1],
+          preview: URL.createObjectURL(file),
+          type: file.type
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      {/* Hero: Smart Mentor Status */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 p-10 rounded-[48px] shadow-2xl border border-white/10">
-        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-           <i className="fa-solid fa-om text-[200px]"></i>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-24">
+      {/* Hero: Dynamic Status */}
+      <section className="relative overflow-hidden bg-brand-primary p-12 rounded-[64px] shadow-2xl border border-brand-sage/20">
+        <div className="absolute top-0 right-0 p-20 opacity-5 pointer-events-none">
+           <i className="fa-solid fa-om text-[250px]"></i>
         </div>
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-4">
-             <div className="flex items-center gap-4">
-               <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white text-3xl">
-                  <i className="fa-solid fa-graduation-cap text-indigo-400"></i>
+        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
+          <div className="space-y-6 text-center lg:text-left">
+             <div className="flex flex-col lg:flex-row items-center gap-6">
+               <div className="w-24 h-24 bg-brand-secondary rounded-[40px] flex items-center justify-center text-brand-accent text-5xl shadow-2xl transform -rotate-6 border border-brand-sage">
+                  <i className="fa-solid fa-graduation-cap"></i>
                </div>
                <div>
-                 <h1 className="text-4xl font-black text-white font-heading tracking-tight leading-none mb-1">Namaste, {name}.</h1>
-                 <p className="text-indigo-200 font-bold uppercase tracking-widest text-[10px] opacity-80">Active Level: {examLevel}</p>
+                 <h1 className="text-5xl font-black text-brand-lightBg font-heading tracking-tight leading-none mb-2">Su-Prabhat, {name}.</h1>
+                 <div className="flex items-center gap-2 justify-center lg:justify-start">
+                    <span className="w-2 h-2 bg-brand-accent rounded-full animate-pulse"></span>
+                    <p className="text-brand-accent font-black uppercase tracking-[0.2em] text-[10px]">{examLevel} Path Active</p>
+                 </div>
                </div>
              </div>
-             <p className="text-indigo-100/70 max-w-lg font-medium text-lg leading-relaxed">
-               I am analyzing latest **NTA & CBSE** trends for you. Select your target below to begin Sadhana.
+             <p className="text-brand-accent/80 max-w-xl font-medium text-xl leading-relaxed">
+               I've researched your latest gaps. You have **{mistakeCount}** critical points to revise today.
              </p>
           </div>
-          <button 
-            onClick={handleAnalysis}
-            disabled={isLoading}
-            className="group bg-white text-indigo-900 px-8 py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3"
-          >
-            {isLoading ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-chart-line"></i>}
-            Analyze My Progress
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4">
+             <button 
+                onClick={handleAnalysis}
+                disabled={isLoading}
+                className="bg-brand-lightBg text-brand-primary px-10 py-6 rounded-[32px] font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3"
+              >
+                {isLoading ? <i className="fa-solid fa-spinner animate-spin"></i> : <i className="fa-solid fa-chart-pie"></i>}
+                Full Progress Report
+              </button>
+              <button 
+                onClick={onStartRapid}
+                className="bg-brand-secondary text-brand-accent px-10 py-6 rounded-[32px] font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl border border-brand-sage/30 flex items-center justify-center gap-3"
+              >
+                <i className="fa-solid fa-bolt-lightning"></i> Rapid Revision
+              </button>
+          </div>
         </div>
       </section>
 
       {analysisResult && (
-        <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-200 dark:border-indigo-900/30 card-shadow prose dark:prose-invert max-w-none animate-in zoom-in-95">
-           <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-black font-heading text-indigo-600 uppercase tracking-tighter">Guru's Personalized Schedule</h3>
-              <button onClick={() => setAnalysisResult(null)} className="text-slate-400 hover:text-rose-500"><i className="fa-solid fa-circle-xmark"></i></button>
+        <div className="bg-white dark:bg-brand-secondary p-10 rounded-[56px] border-4 border-brand-lightBg dark:border-brand-primary shadow-2xl animate-in zoom-in-95">
+           <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-brand-lightBg dark:bg-brand-primary rounded-2xl flex items-center justify-center text-brand-primary dark:text-brand-accent"><i className="fa-solid fa-brain"></i></div>
+                 <h3 className="text-3xl font-black font-heading text-brand-primary dark:text-brand-lightBg uppercase tracking-tighter">Guru's Tactical Plan</h3>
+              </div>
+              <button onClick={() => setAnalysisResult(null)} className="text-brand-muted hover:text-brand-accent text-2xl transition-colors"><i className="fa-solid fa-circle-xmark"></i></button>
            </div>
-           <div className="whitespace-pre-wrap text-sm leading-relaxed overflow-x-auto">{analysisResult}</div>
+           <div className="prose dark:prose-invert max-w-none text-lg text-brand-muted dark:text-brand-accent/80 whitespace-pre-wrap leading-relaxed">
+             {analysisResult}
+           </div>
         </div>
       )}
 
-      {/* Command Hub: Exam & Strategy Roads */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-black text-slate-800 dark:text-white font-heading">Sadhana Command Hub</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <button 
-            onClick={() => handleIntent('neet', 'NEET 12-Month Preparation Roadmap')}
-            className="p-8 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-[32px] text-left group hover:bg-emerald-100 transition-all"
-          >
-            <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
-              <i className="fa-solid fa-stethoscope text-2xl"></i>
+      {/* Chanakya Lens Feature - Highlighted with Gold */}
+      <section className="bg-gradient-to-r from-brand-sage to-brand-primary p-1 rounded-[64px] shadow-2xl group transition-all hover:scale-[1.01]">
+         <div className="bg-brand-lightBg dark:bg-brand-darkBg rounded-[60px] p-10 flex flex-col md:flex-row items-center gap-10">
+            <div className="relative">
+               <div className="w-48 h-48 bg-white dark:bg-brand-secondary rounded-[48px] flex items-center justify-center text-7xl text-brand-primary dark:text-brand-accent transition-transform group-hover:rotate-12 border border-brand-sage/20">
+                  <i className="fa-solid fa-camera-retro"></i>
+               </div>
+               <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-brand-gold text-brand-primary rounded-2xl flex items-center justify-center text-2xl shadow-xl animate-bounce">
+                  <i className="fa-solid fa-eye"></i>
+               </div>
             </div>
-            <h3 className="text-xl font-black text-emerald-900 dark:text-emerald-100">NEET Roadmap</h3>
-            <p className="text-emerald-700/60 text-sm mt-2 font-medium">NTA Pattern, Syllabus Breakdown, & 12-Month Daily Routine.</p>
-          </button>
-
-          <button 
-            onClick={() => handleIntent('jee', 'JEE Main + Advanced Strategic Roadmap')}
-            className="p-8 bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-800 rounded-[32px] text-left group hover:bg-orange-100 transition-all"
-          >
-            <div className="w-14 h-14 bg-orange-600 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
-              <i className="fa-solid fa-microchip text-2xl"></i>
+            <div className="flex-1 space-y-6 text-center md:text-left">
+               <div className="space-y-2">
+                 <h2 className="text-4xl font-black text-brand-primary dark:text-brand-lightBg font-heading tracking-tight">Chanakya Lens</h2>
+                 <p className="text-brand-muted dark:text-brand-accent/60 text-lg font-medium">Snap a photo of any question from your book for a step-by-step AI explanation.</p>
+               </div>
+               <div className="flex flex-col sm:flex-row gap-4">
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-brand-primary text-brand-lightBg px-10 py-5 rounded-[32px] font-black text-xs uppercase tracking-widest shadow-xl hover:bg-brand-secondary transition-all flex items-center justify-center gap-3"
+                  >
+                    <i className="fa-solid fa-image"></i> Select Photo
+                  </button>
+                  <button 
+                    onClick={() => onAskAI("Open Camera for Lens", "detailed")}
+                    className="bg-brand-secondary dark:bg-brand-lightBg dark:text-brand-primary text-brand-lightBg px-10 py-5 rounded-[32px] font-black text-xs uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 border border-brand-sage"
+                  >
+                    <i className="fa-solid fa-video"></i> Launch Camera
+                  </button>
+                  <input type="file" ref={fileInputRef} onChange={handleVisualDoubt} className="hidden" accept="image/*" />
+               </div>
             </div>
-            <h3 className="text-xl font-black text-orange-900 dark:text-orange-100">JEE Mastery</h3>
-            <p className="text-orange-700/60 text-sm mt-2 font-medium">Main + Advanced Roadmaps with Progressive Difficulty.</p>
-          </button>
-
-          <button 
-            onClick={() => handleIntent('strategy', 'Score Improvement & Revision Strategy')}
-            className="p-8 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-[32px] text-left group hover:bg-indigo-100 transition-all"
-          >
-            <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
-              <i className="fa-solid fa-chess-knight text-2xl"></i>
-            </div>
-            <h3 className="text-xl font-black text-indigo-900 dark:text-indigo-100">Score Strategy</h3>
-            <p className="text-indigo-700/60 text-sm mt-2 font-medium">Revision hacks, Mock Test cycles, & score improvement techniques.</p>
-          </button>
-        </div>
+         </div>
       </section>
 
       {/* Subject Intelligence Grid */}
-      <section className="space-y-6">
+      <section className="space-y-8">
         <div className="flex items-center justify-between">
-           <h2 className="text-2xl font-black text-slate-800 dark:text-white font-heading">Subject Intelligence</h2>
-           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Simple to Advanced</span>
+           <h2 className="text-3xl font-black text-brand-primary dark:text-brand-lightBg font-heading tracking-tight">Subject Universe</h2>
+           <span className="text-[10px] font-black text-brand-muted uppercase tracking-widest border border-brand-sage px-4 py-1.5 rounded-full">4 Dimensions Active</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { name: 'Physics', icon: 'fa-atom', color: 'text-blue-500', bg: 'bg-blue-50' },
-            { name: 'Chemistry', icon: 'fa-flask-vial', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-            { name: 'Biology', icon: 'fa-dna', color: 'text-rose-500', bg: 'bg-rose-50' },
-            { name: 'Mathematics', icon: 'fa-calculator', color: 'text-amber-500', bg: 'bg-amber-50' }
+            { name: 'Physics', icon: 'fa-atom', color: 'text-brand-accent' },
+            { name: 'Chemistry', icon: 'fa-flask-vial', color: 'text-brand-accent' },
+            { name: 'Biology', icon: 'fa-dna', color: 'text-brand-accent' },
+            { name: 'Mathematics', icon: 'fa-calculator', color: 'text-brand-accent' }
           ].map(sub => (
             <button 
               key={sub.name}
-              onClick={() => onAskAI(`${sub.name} detailed analysis`, 'subject_deepdive')}
-              className="group bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-100 dark:border-slate-800 card-shadow text-center hover:-translate-y-2 transition-all"
+              onClick={() => onAskAI(`${sub.name} detailed topic analysis and high-yield chapters`, 'subject_deepdive')}
+              className="group bg-white dark:bg-brand-secondary p-10 rounded-[56px] border border-brand-sage/20 dark:border-brand-sage/40 card-shadow text-center hover:-translate-y-2 transition-all relative overflow-hidden"
             >
-              <div className={`w-16 h-16 ${sub.bg} dark:bg-slate-800 rounded-full flex items-center justify-center ${sub.color} text-2xl mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className={`w-20 h-20 bg-brand-lightBg dark:bg-brand-primary rounded-3xl flex items-center justify-center ${sub.color} text-3xl mx-auto mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all shadow-sm border border-brand-sage/20`}>
                 <i className={`fa-solid ${sub.icon}`}></i>
               </div>
-              <h4 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter">{sub.name}</h4>
-              <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">Deep-Dive</p>
+              <h4 className="font-black text-brand-primary dark:text-brand-lightBg uppercase tracking-tighter text-lg">{sub.name}</h4>
+              <p className="text-[10px] font-bold text-brand-muted mt-2 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Enter Dimension</p>
             </button>
           ))}
         </div>
       </section>
 
       {/* Daily Challenge */}
-      <section className="bg-slate-50 dark:bg-slate-900/50 p-10 rounded-[48px] border border-slate-100 dark:border-slate-800 space-y-8 relative overflow-hidden">
-         <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center text-amber-600">
-               <i className="fa-solid fa-brain"></i>
+      <section className="bg-white dark:bg-brand-secondary p-12 rounded-[64px] border-2 border-brand-sage/20 space-y-10 relative overflow-hidden">
+         <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-brand-gold rounded-3xl flex items-center justify-center text-brand-primary text-3xl shadow-xl shadow-brand-gold/20">
+               <i className="fa-solid fa-puzzle-piece"></i>
             </div>
             <div>
-               <h3 className="text-xl font-bold font-heading dark:text-white">Daily Sadhana Challenge</h3>
-               <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">High-Yield NTA Pattern</p>
+               <h3 className="text-3xl font-black font-heading text-brand-primary dark:text-brand-lightBg">Daily Memory Sadhana</h3>
+               <p className="text-[11px] text-brand-muted font-black uppercase tracking-[0.3em]">Freshly Synthesized Question</p>
             </div>
          </div>
-         <p className="text-slate-800 dark:text-slate-200 font-bold text-lg leading-relaxed">
+         <p className="text-brand-primary dark:text-brand-lightBg/80 font-black text-2xl leading-tight">
            {dailyQuestion}
          </p>
          <button 
             onClick={() => onAskAI(dailyQuestion, 'detailed')}
-            className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-6 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+            className="w-full bg-brand-primary dark:bg-brand-lightBg text-brand-lightBg dark:text-brand-primary py-7 rounded-[32px] font-black text-sm uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.01] active:scale-95 transition-all"
           >
-            Reveal Solution with AI Guru
+            Summon Guru for Solution
           </button>
       </section>
     </div>
