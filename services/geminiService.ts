@@ -1,34 +1,30 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const CHANAKYA_SYSTEM_INSTRUCTION = `You are Chanakya, the 'Sarvagya Guru' (The Omniscient Teacher) and supreme mentor for BharatEdu. You are the ultimate authority across the entire Indian educational landscape.
+const CHANAKYA_SYSTEM_INSTRUCTION = `You are Chanakya, the Senior Academic Mentor and Exam Strategist of BharatEdu. 
+You are an AI-powered smart education engine specializing in NEET, JEE, CBSE, and Indian Govt Exams.
+
+ROLE & BEHAVIOR:
+- Act as a syllabus designer and exam strategist.
+- LANGUAGE: Respond in a mix of simple English and Hinglish (e.g., "Beta, follow this schedule zaroor.").
+- RIGOR: Strictly follow latest NTA, NCERT, and CBSE patterns.
+- STRUCTURE: Always use Tables, Bullet Points, and Bold Headings. No filler text.
+- IMPROVEMENT: Each response must be better than the last by analyzing student context.
 
 ACADEMIC SCOPE:
-1. K-12: Complete mastery of all subjects (Maths, Science, Social Studies, Languages) for Classes 1 to 12 across all boards (CBSE, ICSE, State Boards).
-2. Undergraduate (UG): Deep knowledge in Engineering (B.Tech/BE), Medicine (MBBS), Sciences (B.Sc), Commerce (B.Com), Arts (BA), Law, and Management.
-3. Post-Graduate (PG): Specialized expertise in Research, M.Tech, M.Sc, MBA, MA, and PhD level methodologies.
-4. Competitive Exams: Expert guidance for JEE (Main/Advanced), NEET-UG, UPSC Civil Services, SSC (CGL/CHSL), Banking (IBPS/SBI), Railways (RRB), and GATE.
+- K-12: Full mastery of Classes 1-12 (All subjects).
+- Competitive: NEET (NCERT focus), JEE (Main/Advanced), UPSC, SSC.
+- Higher Ed: Graduation and Post-Graduation level research and methodology.
 
-CORE TEACHING PRINCIPLES:
-- Automatic Language Fluidity: Detect the language used by the student (Hindi, English, Tamil, Telugu, Marathi, Bengali, etc.) and respond in that language.
-- Contextual Rigor: Use the [GLOBAL LEVEL] tag to calibrate your complexity. For a Class 3 student, use playful analogies. For a PG researcher, use mathematical proofs and academic citations.
-- Structured Learning: Break down doubts into "Concepts", "Formulae/Key Facts", "Solved Examples", and "Practice Challenges".
+IF USER SELECTS NEET: Create a 6-12 month plan, subject-wise syllabus (Bio/Phy/Chem), and daily NTA routine.
+IF USER SELECTS JEE: Create a Main + Advanced roadmap with progressive difficulty.
+IF SUBJECT SELECTED: Provide Concept Trees, Formula Sheets, and common "Silley Mistakes" for that specific chapter.
 
-MULTIMODAL MASTERY:
-- If an image or video is provided, analyze it thoroughly (handwriting, diagrams, graphs, laboratory experiments).
-- Explain what is happening in the visual media before solving the query.
+Always end with a 'Guru Mantra' (Success Tip).`;
 
-RESPONSE MODES:
-- 'Detailed' (Guru): Masterclass style. Deep theory using gemini-3-pro-preview.
-- 'Short' (Mentor): Quick summary for revision.
-- 'Example' (Sutradhar): Real-world Indian context analogies.
-- 'Speed' (Atomic): High-yield facts for the last 60 seconds before an exam.
-
-Always be encouraging ("Shabash Beta!", "Uthishtha Bharat!") and maintain a persona of a wise, patient, and modern digital Guru.`;
-
-export type TeachingMode = 'short' | 'detailed' | 'example' | 'speed';
+export type TeachingMode = 'short' | 'detailed' | 'example' | 'speed' | 'roadmap' | 'strategy' | 'neet' | 'jee' | 'analysis';
 
 export const solveDoubt = async (
   query: string, 
@@ -38,66 +34,48 @@ export const solveDoubt = async (
   media?: { data: string, mimeType: string }
 ) => {
   const ai = getAI();
+  const modelName = 'gemini-3-pro-preview';
   
-  const modelName = mode === 'detailed' ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
-  
-  const modePrompt = {
-    short: "TEACHING MODE: MENTOR (CONCISE). Summarize the answer in 3-5 high-impact bullet points.",
-    detailed: "TEACHING MODE: GURU (DETAILED). Provide a deep-dive explanation with background, core concept, and a concluding mnemonic.",
-    example: "TEACHING MODE: SUTRADHAR (EXAMPLES). Use 3 distinct real-world analogies from Indian daily life to explain this.",
-    speed: "TEACHING MODE: ATOMIC. Give the most essential formula or definition needed for an exam."
+  const intentPrompt = {
+    short: "Summarize in 3 bullet points.",
+    detailed: "Deep theory explanation with Solved Examples.",
+    example: "Use 3 Desi analogies from Indian daily life.",
+    speed: "Revision burst with 5 critical points.",
+    roadmap: "Build a weekly target schedule.",
+    strategy: "Score improvement hacks and time management.",
+    neet: "Full NEET NTA-pattern Course & 6-month Roadmap.",
+    jee: "Full JEE Main/Advanced Roadmap with progressive difficulty.",
+    analysis: "Analyze mistakes and give a 7-day personalized growth schedule."
   };
 
-  const fullQuery = `[GLOBAL LEVEL: ${examLevel}] [INSTRUCTION: AUTO-DETECT LANGUAGE] ${modePrompt[mode]}\n\nStudent Query: ${query}`;
-
+  const fullQuery = `[INTENT: ${mode}] [TARGET: ${examLevel}] ${intentPrompt[mode]}\n\nStudent Query: ${query}`;
   const parts: any[] = [{ text: fullQuery }];
-  if (media) {
-    parts.unshift({
-      inlineData: {
-        data: media.data,
-        mimeType: media.mimeType
-      }
-    });
-  }
-
+  if (media) parts.unshift({ inlineData: { data: media.data, mimeType: media.mimeType } });
+  
   const response = await ai.models.generateContent({
     model: modelName,
     contents: [...history, { role: 'user', parts }],
-    config: {
-      systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION,
-      temperature: 0.7,
-      thinkingConfig: mode === 'detailed' ? { thinkingBudget: 8000 } : undefined
-    },
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION, temperature: 0.65 }
   });
   return response.text;
 };
 
-export const generateStudyMaterial = async (topic: string, level: string, type: 'notes' | 'formula_sheet') => {
+export const generateSubjectDeepDive = async (subject: string, level: string) => {
   const ai = getAI();
-  const prompt = type === 'notes' 
-    ? `Generate comprehensive study notes for topic: ${topic} at level: ${level}. Include introduction, key sub-topics, and a summary.`
-    : `Create a concise formula and concept sheet for topic: ${topic} at level: ${level}. Use Markdown tables for clarity.`;
-
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    config: {
-      systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION,
-      temperature: 0.5,
-    },
+    contents: `Subject Deep-Dive for ${subject} (${level}). Provide: Chapter List, Formula Sheet, Concept Explanation (Simple to Advanced), and Exam-level MCQs.`,
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
   });
   return response.text;
 };
 
-export const generateSpeedNotes = async (topic: string, examLevel: string) => {
+export const generateProgressAnalysis = async (mistakesCount: number, level: string) => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: [{ role: 'user', parts: [{ text: `Generate a 60-second rapid revision card for: ${topic}. DETECT LANGUAGE AUTOMATICALLY. Level: ${examLevel}.` }] }],
-    config: {
-      systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION,
-      temperature: 0.8,
-    },
+    model: 'gemini-3-pro-preview',
+    contents: `I have ${mistakesCount} mistakes in my journal. Level: ${level}. Identify my weak areas and generate a personalized 7-day study schedule to improve. Use a table.`,
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
   });
   return response.text;
 };
@@ -113,12 +91,12 @@ export const generateExamPaper = async (params: {
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: `Generate 5 high-quality questions for a ${params.level} student. 
-    Category: ${params.examType}. 
-    Subject: ${params.subject}. 
-    Language: ${params.language}.
-    Chapters: ${params.chapters}. 
-    Difficulty: ${params.difficulty}.`,
+    contents: `MOCK TEST GENERATOR:
+    - CATEGORY: ${params.examType}
+    - PATTERN: ${params.examType === 'NEET' ? 'NTA NEET' : params.examType === 'JEE' ? 'NTA JEE Main' : 'CBSE/State'}
+    - DIFFICULTY: ${params.difficulty}
+    - SUBJECT: ${params.subject}
+    Generate 5 balanced questions with difficulty analysis.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -127,24 +105,72 @@ export const generateExamPaper = async (params: {
           type: Type.OBJECT,
           properties: {
             text: { type: Type.STRING },
-            options: { 
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
+            options: { type: Type.ARRAY, items: { type: Type.STRING } },
             correctAnswer: { type: Type.INTEGER },
             explanation: { type: Type.STRING },
+            difficulty: { type: Type.STRING }
           },
           required: ["text", "options", "correctAnswer", "explanation"]
         }
       }
     }
   });
-  
-  try {
-    return JSON.parse(response.text || "[]");
-  } catch (e) {
-    return [];
-  }
+  return JSON.parse(response.text || "[]");
+};
+
+export const generateDailyQuestion = async (level: string) => {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `One high-yield challenge question for ${level} based on latest exam trends.`,
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
+  });
+  return response.text;
+};
+
+export const generateDailyGK = async () => {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: "5 educational updates for Indian aspirants today. JSON format.",
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            cat: { type: Type.STRING },
+            date: { type: Type.STRING },
+            title: { type: Type.STRING },
+            content: { type: Type.STRING }
+          }
+        }
+      }
+    }
+  });
+  return JSON.parse(response.text || "[]");
+};
+
+export const generateSpeedNotes = async (topic: string, level: string) => {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `REVISION BURST: Topic: ${topic}, Level: ${level}. Critical points + memory hacks.`,
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
+  });
+  return response.text;
+};
+
+export const generateStudyMaterial = async (topic: string, level: string, type: 'notes' | 'formula_sheet') => {
+  const ai = getAI();
+  const prompt = type === 'notes' ? `Complete study notes for ${topic}.` : `Formula sheet for ${topic}.`;
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: prompt,
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
+  });
+  return response.text;
 };
 
 export const speakText = async (text: string, voiceName: string = 'Kore') => {
@@ -155,12 +181,9 @@ export const speakText = async (text: string, voiceName: string = 'Kore') => {
       contents: [{ parts: [{ text: text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName } },
-        },
-      },
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } }
+      }
     });
-
     const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     if (base64Audio) {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
@@ -179,18 +202,14 @@ export const speakText = async (text: string, voiceName: string = 'Kore') => {
 export function encodeBase64(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
 
 export function decodeBase64(base64: string) {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
+  for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
   return bytes;
 }
 
@@ -200,9 +219,7 @@ export async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampl
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
   for (let channel = 0; channel < numChannels; channel++) {
     const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-    }
+    for (let i = 0; i < frameCount; i++) channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
   }
   return buffer;
 }

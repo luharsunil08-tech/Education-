@@ -1,200 +1,158 @@
 
-import React, { useState } from 'react';
-import ChanakyaLive from '../components/ChanakyaLive.tsx';
+import React, { useState, useEffect } from 'react';
+import { generateDailyQuestion, solveDoubt, generateProgressAnalysis, generateSubjectDeepDive } from '../services/geminiService.ts';
 
 interface HomeProps {
   name: string;
-  onAskAI: (text: string) => void;
+  onAskAI: (text: string, mode?: any) => void;
   onStartRapid: () => void;
   examLevel: string;
   mistakeCount: number;
 }
 
 const Home: React.FC<HomeProps> = ({ name, onAskAI, onStartRapid, examLevel, mistakeCount }) => {
-  const [showLive, setShowLive] = useState(false);
-  const [motivation, setMotivation] = useState<{ quote: string; author: string } | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
-  const [goals, setGoals] = useState([
-    { id: 1, text: 'Complete Chapter Summary', done: false },
-    { id: 2, text: 'Solve 5 PYQs', done: true },
-    { id: 3, text: 'Daily GK Update', done: false },
-  ]);
+  const [dailyQuestion, setDailyQuestion] = useState<string>("Summoning Chanakya...");
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const dailyQuestion = "If a matrix A is symmetric, then its transpose A' is equal to?";
+  useEffect(() => {
+    const initDaily = async () => {
+      const q = await generateDailyQuestion(examLevel);
+      setDailyQuestion(q || "Zabardast taiyari beta! Keep going.");
+    };
+    initDaily();
+  }, [examLevel]);
 
-  const fetchMotivation = async () => {
-    setIsFetching(true);
-    try {
-      // Using a reliable public API for wisdom/quotes
-      const response = await fetch('https://dummyjson.com/quotes/random');
-      const data = await response.json();
-      setMotivation({ quote: data.quote, author: data.author });
-    } catch (error) {
-      setMotivation({ quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" });
-    } finally {
-      setIsFetching(false);
-    }
+  const handleAnalysis = async () => {
+    setIsLoading(true);
+    const res = await generateProgressAnalysis(mistakeCount, examLevel);
+    setAnalysisResult(res);
+    setIsLoading(false);
   };
 
-  const toggleGoal = (id: number) => {
-    setGoals(goals.map(g => g.id === id ? { ...g, done: !g.done } : g));
+  const handleSubject = async (subject: string) => {
+    onAskAI(`Complete syllabus and mastery plan for ${subject}`, 'detailed');
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {showLive && <ChanakyaLive onClose={() => setShowLive(false)} />}
-      
-      {/* External API Integration: Guru's Motivation Button */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-amber-500 to-orange-600 p-6 rounded-[32px] shadow-xl shadow-orange-100 dark:shadow-none group">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none group-hover:scale-125 transition-transform duration-700">
-          <i className="fa-solid fa-om text-[120px]"></i>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Dynamic Welcome Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 p-10 rounded-[48px] shadow-2xl border border-white/10">
+        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+           <i className="fa-solid fa-om text-[200px]"></i>
         </div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-white">
-            <h3 className="text-xl font-black font-heading uppercase tracking-tighter">Guru's Blessing</h3>
-            <p className="text-xs text-amber-100 font-bold uppercase tracking-widest mt-1">Daily dose of wisdom for the dedicated scholar</p>
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-4">
+             <div className="flex items-center gap-4">
+               <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white text-3xl">
+                  <i className="fa-solid fa-graduation-cap text-indigo-400"></i>
+               </div>
+               <div>
+                 <h1 className="text-4xl font-black text-white font-heading tracking-tight leading-none mb-1">Namaste, {name}.</h1>
+                 <p className="text-indigo-200 font-bold uppercase tracking-widest text-[10px] opacity-80">Path: {examLevel}</p>
+               </div>
+             </div>
+             <p className="text-indigo-100/70 max-w-lg font-medium text-lg leading-relaxed">
+               Chanakya AI is analyzing ${examLevel} patterns. Your success is our mission.
+             </p>
           </div>
-          
           <button 
-            onClick={fetchMotivation}
-            disabled={isFetching}
-            className={`bg-white text-orange-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95 flex items-center gap-3 ${isFetching ? 'opacity-70 animate-pulse' : 'hover:bg-amber-50'}`}
+            onClick={handleAnalysis}
+            disabled={isLoading}
+            className="bg-white text-indigo-900 px-8 py-5 rounded-3xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl disabled:opacity-50"
           >
-            {isFetching ? (
-              <i className="fa-solid fa-spinner animate-spin"></i>
-            ) : (
-              <i className="fa-solid fa-hands-praying"></i>
-            )}
-            {isFetching ? 'Invoking...' : 'Receive Motivation'}
+            {isLoading ? <i className="fa-solid fa-spinner animate-spin"></i> : 'Analyze My Progress'}
           </button>
         </div>
-
-        {motivation && (
-          <div className="mt-6 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl animate-in zoom-in-95 duration-300">
-            <p className="text-lg text-white font-serif italic font-medium leading-relaxed">
-              "{motivation.quote}"
-            </p>
-            <p className="text-right text-amber-200 text-xs font-black uppercase tracking-widest mt-4">
-              — {motivation.author}
-            </p>
-          </div>
-        )}
       </section>
 
-      {/* Welcome & Global Focus */}
-      <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-1">
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Namaste, {name}</p>
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white font-heading tracking-tight">Focus on Today's Learning.</h2>
+      {analysisResult && (
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-200 dark:border-indigo-900/30 card-shadow prose dark:prose-invert max-w-none animate-in zoom-in-95">
+           <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-black font-heading text-indigo-600">Personalized Growth Plan</h3>
+              <button onClick={() => setAnalysisResult(null)} className="text-slate-400 hover:text-rose-500"><i className="fa-solid fa-circle-xmark"></i></button>
+           </div>
+           <div className="whitespace-pre-wrap text-sm leading-relaxed overflow-x-auto">{analysisResult}</div>
         </div>
-        
-        <div className="bg-indigo-900 text-white p-5 rounded-2xl flex items-center gap-6 shadow-md border border-white/5">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Global Path</span>
-            <span className="text-xl font-black">{examLevel} Standard</span>
-          </div>
-          <div className="h-10 w-px bg-white/20"></div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Streak</span>
-            <span className="text-xl font-black">7 Days 🔥</span>
-          </div>
-        </div>
-      </section>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          {/* Main Action Hub */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-             <section 
-               onClick={onStartRapid}
-               className="bg-indigo-600 text-white p-6 rounded-[32px] cursor-pointer hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 dark:shadow-none group overflow-hidden relative"
-              >
-                <div className="relative z-10">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <i className="fa-solid fa-bolt text-lg"></i>
-                  </div>
-                  <h3 className="text-xl font-bold font-heading">60-Sec Revision</h3>
-                  <p className="text-xs text-white/70 mt-1">Atomic notes for {examLevel}.</p>
-                </div>
-                <i className="fa-solid fa-bolt absolute -right-4 -bottom-4 text-8xl opacity-10 group-hover:scale-125 transition-transform"></i>
-             </section>
-
-             <section 
-               onClick={() => {}} 
-               className="bg-emerald-600 text-white p-6 rounded-[32px] cursor-pointer hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 dark:shadow-none group overflow-hidden relative"
-              >
-                <div className="relative z-10">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                    <i className="fa-solid fa-book-bookmark text-lg"></i>
-                  </div>
-                  <h3 className="text-xl font-bold font-heading">Mistake Journal</h3>
-                  <p className="text-xs text-white/70 mt-1">{mistakeCount} concepts saved.</p>
-                </div>
-                <i className="fa-solid fa-bookmark absolute -right-4 -bottom-4 text-8xl opacity-10 group-hover:scale-125 transition-transform"></i>
-             </section>
-          </div>
-
-          {/* Daily Checklist */}
-          <section className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 card-shadow">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 font-heading">Daily Checklist</h3>
-              <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/40 px-3 py-1.5 rounded-lg uppercase tracking-widest">
-                {goals.filter(g => g.done).length}/{goals.length} Task
-              </span>
-            </div>
-            
-            <div className="space-y-3">
-              {goals.map(goal => (
-                <div 
-                  key={goal.id} 
-                  onClick={() => toggleGoal(goal.id)}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-800 transition-all group"
-                >
-                  <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                    goal.done ? 'bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-100 dark:shadow-none' : 'border-slate-300 dark:border-slate-600'
-                  }`}>
-                    {goal.done && <i className="fa-solid fa-check text-[10px] text-white"></i>}
-                  </div>
-                  <span className={`text-sm font-bold ${
-                    goal.done ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'
-                  }`}>
-                    {goal.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Sidebar - Quick Stats & Revision */}
-        <div className="space-y-8">
-          {/* Question Pulse with One-Tap Doubt */}
-          <section className="bg-amber-50 dark:bg-amber-900/10 p-8 rounded-[32px] border border-amber-100 dark:border-amber-900/30">
-            <div className="flex items-center gap-3 mb-4 text-amber-700 dark:text-amber-400">
-               <i className="fa-solid fa-bolt"></i>
-               <h3 className="font-bold text-sm tracking-widest uppercase">Target Revision</h3>
-            </div>
-            <p className="text-sm text-slate-800 dark:text-slate-200 font-bold leading-relaxed mb-6">
-              {dailyQuestion}
-            </p>
+      {/* Strategic Exam Paths */}
+      <section className="space-y-6">
+        <h2 className="text-2xl font-black text-slate-800 dark:text-white font-heading">Syllabus Excellence Hub</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[
+            { id: 'neet', label: 'NEET Master Course', icon: 'fa-stethoscope', color: 'bg-emerald-600' },
+            { id: 'jee', label: 'JEE Success Roadmap', icon: 'fa-microchip', color: 'bg-orange-600' },
+            { id: 'boards', label: 'CBSE 10/12 Strategy', icon: 'fa-book-open', color: 'bg-blue-600' },
+            { id: 'govt', label: 'Govt Exam Tracker', icon: 'fa-building-columns', color: 'bg-indigo-600' }
+          ].map(p => (
             <button 
-              onClick={() => onAskAI(dailyQuestion)}
-              className="w-full bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 py-4 rounded-2xl text-xs font-black border border-amber-200 dark:border-amber-900 shadow-sm hover:shadow-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest"
+              key={p.id}
+              onClick={() => onAskAI(`Generate a full ${p.label}`, p.id as any)}
+              className="p-6 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 card-shadow hover:border-indigo-400 transition-all text-left flex flex-col gap-4 group"
             >
-              <i className="fa-solid fa-brain"></i> Ask Chanakya Guru
+              <div className={`${p.color} w-10 h-10 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform`}>
+                <i className={`fa-solid ${p.icon}`}></i>
+              </div>
+              <span className="font-bold text-slate-800 dark:text-white text-sm">{p.label}</span>
             </button>
-          </section>
+          ))}
+        </div>
+      </section>
 
-          <section className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 card-shadow text-center">
-             <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-3xl flex items-center justify-center text-indigo-600 text-2xl mx-auto mb-4 shadow-inner">
-                <i className="fa-solid fa-graduation-cap"></i>
+      {/* Subject Intelligence */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+           <h2 className="text-2xl font-black text-slate-800 dark:text-white font-heading">Subject Sadhana</h2>
+           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NTA/CBSE Patterns</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {['Physics', 'Chemistry', 'Biology', 'Mathematics'].map(sub => (
+            <button 
+              key={sub}
+              onClick={() => handleSubject(sub)}
+              className="group bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-100 dark:border-slate-800 card-shadow text-center hover:-translate-y-2 transition-all"
+            >
+              <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center text-indigo-600 text-2xl mx-auto mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                <i className={`fa-solid ${sub === 'Physics' ? 'fa-atom' : sub === 'Chemistry' ? 'fa-flask-vial' : sub === 'Biology' ? 'fa-dna' : 'fa-calculator'}`}></i>
+              </div>
+              <h4 className="font-black text-slate-800 dark:text-white uppercase tracking-tighter">{sub}</h4>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2">
+          <section className="bg-slate-50 dark:bg-slate-900/50 p-10 rounded-[48px] border border-slate-100 dark:border-slate-800 space-y-8">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center text-amber-600">
+                   <i className="fa-solid fa-brain"></i>
+                </div>
+                <div>
+                   <h3 className="text-xl font-bold font-heading dark:text-white">Dharma Challenge</h3>
+                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Question of the Day</p>
+                </div>
              </div>
-             <h4 className="font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tighter">Academic Growth</h4>
-             <p className="text-xs text-slate-400 font-medium leading-relaxed">
-               Beta, you've improved your accuracy in {examLevel} subjects by 15% this week!
+             <p className="text-slate-800 dark:text-slate-200 font-bold text-lg leading-relaxed">
+               {dailyQuestion}
              </p>
+             <button 
+                onClick={() => onAskAI(dailyQuestion, 'detailed')}
+                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-6 rounded-3xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                Reveal Solution with AI Guru
+              </button>
           </section>
+        </div>
+
+        <div className="space-y-10">
+           <div className="bg-indigo-600 p-10 rounded-[48px] text-white space-y-6 relative overflow-hidden group">
+              <i className="fa-solid fa-bolt absolute -right-6 -top-6 text-[150px] opacity-10 group-hover:scale-125 transition-transform duration-700"></i>
+              <h4 className="text-2xl font-black font-heading leading-tight relative z-10">Atomic Revision.</h4>
+              <p className="text-indigo-100 text-sm relative z-10 font-medium">Generate 60s memory hacks for any topic instantly.</p>
+              <button onClick={onStartRapid} className="w-full bg-white text-indigo-600 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest relative z-10 shadow-lg">Open Vault</button>
+           </div>
         </div>
       </div>
     </div>

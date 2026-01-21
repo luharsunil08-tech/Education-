@@ -7,24 +7,35 @@ import AIChat from './pages/AIChat.tsx';
 import GK from './pages/GK.tsx';
 import Profile from './pages/Profile.tsx';
 import Login from './pages/Login.tsx';
-import Mistakes from './pages/Mistakes.tsx';
+import KnowledgeVault from './pages/KnowledgeVault.tsx';
 import RapidRevision from './pages/RapidRevision.tsx';
+import { Bookmark } from './types.ts';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [darkMode, setDarkMode] = useState(false);
-  const [pendingDoubt, setPendingDoubt] = useState<string | null>(null);
-  const [globalExam, setGlobalExam] = useState('JEE');
+  const [pendingDoubt, setPendingDoubt] = useState<{ query: string, mode: string } | null>(null);
+  const [globalExam, setGlobalExam] = useState('JEE/NEET');
+  
   const [mistakes, setMistakes] = useState<any[]>(() => {
     const saved = localStorage.getItem('mistakes');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => {
+    const saved = localStorage.getItem('bookmarks');
     return saved ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
     localStorage.setItem('mistakes', JSON.stringify(mistakes));
   }, [mistakes]);
+
+  useEffect(() => {
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
 
   useEffect(() => {
     if (darkMode) {
@@ -40,8 +51,16 @@ const App: React.FC = () => {
     }
   };
 
-  const askAI = (questionText: string) => {
-    setPendingDoubt(`[${globalExam}] Explain this specifically for my level: ${questionText}`);
+  const addBookmark = (bookmark: Bookmark) => {
+    setBookmarks(prev => [bookmark, ...prev]);
+  };
+
+  const removeBookmark = (id: string) => {
+    setBookmarks(prev => prev.filter(b => b.id !== id));
+  };
+
+  const askAI = (query: string, mode: string = 'detailed') => {
+    setPendingDoubt({ query, mode });
     setActiveTab('chat');
   };
 
@@ -57,12 +76,20 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home': return <Home name={userName} onAskAI={askAI} onStartRapid={() => setActiveTab('rapid')} examLevel={globalExam} mistakeCount={mistakes.length} />;
-      case 'exams': return <Exams onAskAI={askAI} onMistake={addMistake} examLevel={globalExam} />;
-      case 'chat': return <AIChat pendingDoubt={pendingDoubt} clearPendingDoubt={() => setPendingDoubt(null)} examLevel={globalExam} />;
+      case 'exams': return <Exams onAskAI={(q) => askAI(q, 'detailed')} onMistake={addMistake} examLevel={globalExam} />;
+      case 'chat': return <AIChat pendingDoubt={pendingDoubt} clearPendingDoubt={() => setPendingDoubt(null)} examLevel={globalExam} onBookmark={addBookmark} />;
       case 'gk': return <GK />;
       case 'profile': return <Profile />;
-      case 'mistakes': return <Mistakes mistakes={mistakes} onAskAI={askAI} onClear={() => setMistakes([])} />;
-      case 'rapid': return <RapidRevision examLevel={globalExam} onAskAI={askAI} />;
+      case 'mistakes': return (
+        <KnowledgeVault 
+          mistakes={mistakes} 
+          bookmarks={bookmarks}
+          onAskAI={(q) => askAI(q, 'detailed')} 
+          onClearMistakes={() => setMistakes([])}
+          onRemoveBookmark={removeBookmark}
+        />
+      );
+      case 'rapid': return <RapidRevision examLevel={globalExam} onAskAI={(q) => askAI(q, 'speed')} />;
       default: return <Home name={userName} onAskAI={askAI} onStartRapid={() => setActiveTab('rapid')} examLevel={globalExam} mistakeCount={mistakes.length} />;
     }
   };

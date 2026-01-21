@@ -13,6 +13,15 @@ export interface Question {
   examType: ExamType;
 }
 
+export interface Bookmark {
+  id: string;
+  query: string;
+  response: string;
+  category: string;
+  tags: string[];
+  date: string;
+}
+
 export interface UserProfile {
   name: string;
   targetExam: ExamType;
