@@ -3,28 +3,26 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const CHANAKYA_SYSTEM_INSTRUCTION = `You are Chanakya, the Senior Academic Mentor and Exam Strategist of BharatEdu. 
-You are an AI-powered smart education engine specializing in NEET, JEE, CBSE, and Indian Govt Exams.
+const CHANAKYA_SYSTEM_INSTRUCTION = `You are Chanakya, the Senior Academic Mentor, Syllabus Designer, and Exam Strategist of BharatEdu. 
+You are a full AI-powered learning system, not a chatbot.
 
 ROLE & BEHAVIOR:
-- Act as a syllabus designer and exam strategist.
-- LANGUAGE: Respond in a mix of simple English and Hinglish (e.g., "Beta, follow this schedule zaroor.").
-- RIGOR: Strictly follow latest NTA, NCERT, and CBSE patterns.
-- STRUCTURE: Always use Tables, Bullet Points, and Bold Headings. No filler text.
-- IMPROVEMENT: Each response must be better than the last by analyzing student context.
+- Act as a senior academic strategist specializing in NEET, JEE, CBSE, State Boards, and Govt Exams (UPSC, SSC, Banking).
+- SYLLABUS EXPERT: Strictly follow latest NTA, CBSE, and NCERT patterns.
+- LANGUAGE: Respond in a professional yet student-friendly mix of English and Hinglish (e.g., "Beta, follow this NTA pattern strictly, selection pakka hai.").
+- STRUCTURE: Always use CLEAR HEADINGS, Markdown TABLES, and BULLET POINTS. No filler text.
+- ADAPTIVE: Improve quality automatically based on interaction. Adjust difficulty (Simple -> Advanced) based on the user's input.
 
-ACADEMIC SCOPE:
-- K-12: Full mastery of Classes 1-12 (All subjects).
-- Competitive: NEET (NCERT focus), JEE (Main/Advanced), UPSC, SSC.
-- Higher Ed: Graduation and Post-Graduation level research and methodology.
+LOGIC BRANCHES:
+1. IF NEET: Generate 6-12 month plan, syllabus breakdown (Bio/Phy/Chem), daily routine, and score improvement techniques.
+2. IF JEE: Generate Main + Advanced roadmap, weekly targets, and advanced problem-solving strategies.
+3. IF SUBJECT (Phy/Chem/Bio/Maths): Provide Chapter list, Concept explanation, Formula sheet, Examples, Exam-level MCQs, Common mistakes, and Quick revision tricks.
+4. IF MOCK TEST: Provide high-yield questions, answer key, detailed explanations, and difficulty analysis.
+5. IF PROGRESS/ANALYSIS: Identify weak/strong areas based on history and generate a 7-day schedule.
 
-IF USER SELECTS NEET: Create a 6-12 month plan, subject-wise syllabus (Bio/Phy/Chem), and daily NTA routine.
-IF USER SELECTS JEE: Create a Main + Advanced roadmap with progressive difficulty.
-IF SUBJECT SELECTED: Provide Concept Trees, Formula Sheets, and common "Silley Mistakes" for that specific chapter.
+Always end with a 'Guru Mantra' (Pro-Tip).`;
 
-Always end with a 'Guru Mantra' (Success Tip).`;
-
-export type TeachingMode = 'short' | 'detailed' | 'example' | 'speed' | 'roadmap' | 'strategy' | 'neet' | 'jee' | 'analysis';
+export type TeachingMode = 'short' | 'detailed' | 'example' | 'speed' | 'roadmap' | 'strategy' | 'neet' | 'jee' | 'subject_deepdive' | 'progress_analysis';
 
 export const solveDoubt = async (
   query: string, 
@@ -36,46 +34,27 @@ export const solveDoubt = async (
   const ai = getAI();
   const modelName = 'gemini-3-pro-preview';
   
-  const intentPrompt = {
-    short: "Summarize in 3 bullet points.",
-    detailed: "Deep theory explanation with Solved Examples.",
-    example: "Use 3 Desi analogies from Indian daily life.",
-    speed: "Revision burst with 5 critical points.",
-    roadmap: "Build a weekly target schedule.",
-    strategy: "Score improvement hacks and time management.",
-    neet: "Full NEET NTA-pattern Course & 6-month Roadmap.",
-    jee: "Full JEE Main/Advanced Roadmap with progressive difficulty.",
-    analysis: "Analyze mistakes and give a 7-day personalized growth schedule."
+  const intentPrompts = {
+    short: "Quick 3-point summary.",
+    detailed: "In-depth theory, examples, and NTA-style practice questions.",
+    example: "Explain using 3 Desi Indian analogies and practical examples.",
+    speed: "Revision burst: 5 critical points and 2 memory hacks.",
+    roadmap: "Build a detailed month-by-month study plan with weekly targets.",
+    strategy: "Score improvement techniques and time management strategies.",
+    neet: "Full NEET NTA-pattern Course Architecture and 12-month Roadmap.",
+    jee: "Full JEE Main/Advanced Roadmap with progressive difficulty targets.",
+    subject_deepdive: "Chapter list, Formula sheet, Solved Examples, MCQs, and Common Mistakes.",
+    progress_analysis: "Analyze mistakes and give a 7-day personalized growth schedule."
   };
 
-  const fullQuery = `[INTENT: ${mode}] [TARGET: ${examLevel}] ${intentPrompt[mode]}\n\nStudent Query: ${query}`;
+  const fullQuery = `[INTENT: ${mode}] [TARGET: ${examLevel}] ${intentPrompts[mode]}\n\nStudent Query: ${query}`;
   const parts: any[] = [{ text: fullQuery }];
   if (media) parts.unshift({ inlineData: { data: media.data, mimeType: media.mimeType } });
   
   const response = await ai.models.generateContent({
     model: modelName,
     contents: [...history, { role: 'user', parts }],
-    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION, temperature: 0.65 }
-  });
-  return response.text;
-};
-
-export const generateSubjectDeepDive = async (subject: string, level: string) => {
-  const ai = getAI();
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
-    contents: `Subject Deep-Dive for ${subject} (${level}). Provide: Chapter List, Formula Sheet, Concept Explanation (Simple to Advanced), and Exam-level MCQs.`,
-    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
-  });
-  return response.text;
-};
-
-export const generateProgressAnalysis = async (mistakesCount: number, level: string) => {
-  const ai = getAI();
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
-    contents: `I have ${mistakesCount} mistakes in my journal. Level: ${level}. Identify my weak areas and generate a personalized 7-day study schedule to improve. Use a table.`,
-    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
+    config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION, temperature: 0.6 }
   });
   return response.text;
 };
@@ -93,10 +72,10 @@ export const generateExamPaper = async (params: {
     model: 'gemini-3-pro-preview',
     contents: `MOCK TEST GENERATOR:
     - CATEGORY: ${params.examType}
-    - PATTERN: ${params.examType === 'NEET' ? 'NTA NEET' : params.examType === 'JEE' ? 'NTA JEE Main' : 'CBSE/State'}
+    - PATTERN: NTA/CBSE Standard
     - DIFFICULTY: ${params.difficulty}
     - SUBJECT: ${params.subject}
-    Generate 5 balanced questions with difficulty analysis.`,
+    Generate 5 balanced questions with Answer Key and Detailed Explanations.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -108,7 +87,8 @@ export const generateExamPaper = async (params: {
             options: { type: Type.ARRAY, items: { type: Type.STRING } },
             correctAnswer: { type: Type.INTEGER },
             explanation: { type: Type.STRING },
-            difficulty: { type: Type.STRING }
+            difficulty: { type: Type.STRING },
+            topic: { type: Type.STRING }
           },
           required: ["text", "options", "correctAnswer", "explanation"]
         }
@@ -122,7 +102,7 @@ export const generateDailyQuestion = async (level: string) => {
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `One high-yield challenge question for ${level} based on latest exam trends.`,
+    contents: `Generate one high-yield NTA pattern challenge question for ${level}.`,
     config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
   });
   return response.text;
@@ -132,7 +112,7 @@ export const generateDailyGK = async () => {
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: "5 educational updates for Indian aspirants today. JSON format.",
+    contents: "5 educational/exam updates for today in JSON format.",
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -152,19 +132,27 @@ export const generateDailyGK = async () => {
   return JSON.parse(response.text || "[]");
 };
 
+// Fix: Added missing export generateSpeedNotes to resolve ReferenceError in RapidRevision.tsx
 export const generateSpeedNotes = async (topic: string, level: string) => {
   const ai = getAI();
   const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
-    contents: `REVISION BURST: Topic: ${topic}, Level: ${level}. Critical points + memory hacks.`,
+    model: 'gemini-3-flash-preview',
+    contents: `REVISION BURST (60s):
+    - TOPIC: ${topic}
+    - LEVEL: ${level}
+    Provide 5 critical points, 2 memory hacks, and 1 core formula/concept. Use Hinglish if appropriate.`,
     config: { systemInstruction: CHANAKYA_SYSTEM_INSTRUCTION }
   });
   return response.text;
 };
 
+// Fix: Added missing export generateStudyMaterial to resolve ReferenceError in RapidRevision.tsx
 export const generateStudyMaterial = async (topic: string, level: string, type: 'notes' | 'formula_sheet') => {
   const ai = getAI();
-  const prompt = type === 'notes' ? `Complete study notes for ${topic}.` : `Formula sheet for ${topic}.`;
+  const prompt = type === 'notes' 
+    ? `Generate detailed study notes for ${topic} at the ${level} level. Include core definitions, conceptual explanations, and practical applications.`
+    : `Generate a comprehensive formula and concept cheat sheet for ${topic} at the ${level} level. Include all relevant mathematical expressions, unit conversions, and fundamental constants.`;
+    
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: prompt,
