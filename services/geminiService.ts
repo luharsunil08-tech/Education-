@@ -1,8 +1,6 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const CHANAKYA_SYSTEM_INSTRUCTION = `You are Chanakya, the Universal Academic Mentor and Senior Syllabus Architect of BharatEdu. 
 
 YOUR ACADEMIC SCOPE:
@@ -25,6 +23,9 @@ export interface ServiceResponse<T> {
   error?: string;
   code?: number;
 }
+
+// Helper to get fresh instance
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const solveDoubt = async (
   query: string, 
@@ -52,6 +53,9 @@ export const solveDoubt = async (
     });
     return response.text;
   } catch (error: any) {
+    if (error.message?.includes("Requested entity was not found")) {
+        return "ERROR_API_KEY_INVALID";
+    }
     return `Error: ${error.message}`;
   }
 };
