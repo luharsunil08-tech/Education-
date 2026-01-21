@@ -24,8 +24,14 @@ export interface ServiceResponse<T> {
   code?: number;
 }
 
-// Helper to get fresh instance
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to get fresh instance using the environment variable
+const getAI = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API_KEY is missing from environment.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const solveDoubt = async (
   query: string, 
@@ -53,10 +59,11 @@ export const solveDoubt = async (
     });
     return response.text;
   } catch (error: any) {
-    if (error.message?.includes("Requested entity was not found")) {
-        return "ERROR_API_KEY_INVALID";
+    console.error("solveDoubt error:", error);
+    if (error.message?.includes("API_KEY is missing") || error.message?.includes("API key not valid")) {
+        return "Guru's channel is currently disconnected. Please ensure your environment has a valid API Key.";
     }
-    return `Error: ${error.message}`;
+    return `Guru is currently in silence (Error: ${error.message})`;
   }
 };
 
@@ -108,7 +115,7 @@ export const generateDailyGK = async () => {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: "Research latest updates. JSON format.",
+      contents: "Research latest Indian academic and current updates. JSON format.",
       config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || "[]");
@@ -153,7 +160,7 @@ export const speakText = async (text: string, voiceName: string = 'Kore') => {
       source.start();
       return source;
     }
-  } catch (error) { console.error(error); }
+  } catch (error) { console.error("SpeakText error:", error); }
   return null;
 };
 
@@ -162,7 +169,7 @@ export const generateDailyQuestion = async (examLevel: string) => {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Question for ${examLevel}. Text only.`,
+      contents: `Generate one challenging question for ${examLevel} aspirants. Text only.`,
     });
     return response.text;
   } catch (error) { return null; }
@@ -173,7 +180,7 @@ export const generateExamPaper = async (config: any) => {
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `5 MCQs for ${config.subject} (${config.level}).`,
+      contents: `Generate 5 high-quality MCQs for ${config.subject} (${config.level}).`,
       config: { responseMimeType: "application/json" }
     });
     return JSON.parse(response.text || "[]");
@@ -205,13 +212,17 @@ export async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampl
 }
 
 export const generateSpeedNotes = async (topic: string, level: string) => {
-  const ai = getAI();
-  const res = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: `Rapid Notes: ${topic} (${level})` });
-  return res.text;
+  try {
+    const ai = getAI();
+    const res = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: `Rapid Notes: ${topic} (${level})` });
+    return res.text;
+  } catch (error) { return "Synthesis failed."; }
 };
 
 export const generateStudyMaterial = async (topic: string, level: string, type: string) => {
-  const ai = getAI();
-  const res = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: `Material: ${topic} (${level}) - ${type}` });
-  return res.text;
+  try {
+    const ai = getAI();
+    const res = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: `Material: ${topic} (${level}) - ${type}` });
+    return res.text;
+  } catch (error) { return "Synthesis failed."; }
 }
