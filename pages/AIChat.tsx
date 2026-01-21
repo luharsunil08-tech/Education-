@@ -23,7 +23,6 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
   const [input, setInput] = useState('');
   const [showLive, setShowLive] = useState(false);
   const [isSpeakingId, setIsSpeakingId] = useState<number | null>(null);
-  const [preferredVoice, setPreferredVoice] = useState<'Kore' | 'Puck'>('Kore');
   const [teachingMode, setTeachingMode] = useState<TeachingMode>('detailed');
   const [selectedMedia, setSelectedMedia] = useState<{ file?: File; base64: string; preview: string; type: string } | null>(null);
   const [bookmarkingMessage, setBookmarkingMessage] = useState<{ query: string, response: string } | null>(null);
@@ -32,7 +31,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: `Namaste! I am Chanakya. Upload a photo of your notebook or type your doubt. I'm ready for your ${examLevel} queries.` }
+    { role: 'model', text: `Namaste! I am Chanakya, your Universal Guru. I can help you with anything from Class 1 basics to Ph.D. research, JEE/NEET, and Govt Exams. \n\nHow may I illuminate your path today?` }
   ]);
   const [loading, setLoading] = useState(false);
   
@@ -45,7 +44,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
     if (pendingDoubt) {
       if (pendingDoubt.media) {
         setSelectedMedia({ base64: pendingDoubt.media.base64, preview: pendingDoubt.media.preview, type: pendingDoubt.media.type });
-        handleSend(pendingDoubt.query || "Please solve this visual doubt.", pendingDoubt.mode as any);
+        handleSend(pendingDoubt.query || "Please analyze this visual query.", pendingDoubt.mode as any);
       } else {
         handleSend(pendingDoubt.query, pendingDoubt.mode as any);
       }
@@ -118,7 +117,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
 
     const currentMessage: Message = { 
       role: 'user', 
-      text: userMsg || "Please analyze this.",
+      text: userMsg || "Analyzing visual input...",
       media: selectedMedia ? { url: selectedMedia.preview, mimeType: selectedMedia.type } : undefined,
       originalQuery: userMsg
     };
@@ -134,7 +133,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
 
     try {
       const response = await solveDoubt(
-        userMsg || "Please solve this visual doubt with a step-by-step explanation.", 
+        userMsg || "Explain the diagram or question in this image.", 
         currentHistory, 
         modeOverride || teachingMode, 
         examLevel, 
@@ -142,7 +141,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
       );
       setMessages(prev => [...prev, { role: 'model', text: response, originalQuery: userMsg }]);
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'model', text: "Guru encountered a visual block. Please retry with a clearer photo." }]);
+      setMessages(prev => [...prev, { role: 'model', text: "Guru encountered a pedagogical block. Please rephrase or use a clearer photo." }]);
     } finally {
       setLoading(false);
     }
@@ -156,7 +155,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
     }
     currentAudioRef.current?.stop();
     setIsSpeakingId(id);
-    const source = await speakText(text, preferredVoice);
+    const source = await speakText(text, 'Kore');
     if (source) {
       currentAudioRef.current = source;
       source.onended = () => setIsSpeakingId(null);
@@ -181,7 +180,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
             }} className="w-16 h-16 rounded-full bg-white/10 text-brand-lightBg flex items-center justify-center border border-white/20"><i className="fa-solid fa-xmark text-2xl"></i></button>
             <button onClick={capturePhoto} className="w-24 h-24 rounded-full bg-brand-lightBg border-8 border-brand-accent/20 flex items-center justify-center shadow-2xl"><div className="w-16 h-16 rounded-full bg-brand-primary"></div></button>
           </div>
-          <div className="absolute top-10 text-brand-lightBg font-black text-xs uppercase tracking-widest bg-brand-primary/40 px-6 py-2 rounded-full border border-brand-sage">Frame your Doubt</div>
+          <div className="absolute top-10 text-brand-lightBg font-black text-xs uppercase tracking-widest bg-brand-primary/40 px-6 py-2 rounded-full border border-brand-sage">Point at your Book</div>
         </div>
       )}
 
@@ -190,27 +189,25 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
           <div className="flex justify-between items-center">
              <div className="flex items-center gap-3">
                <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center text-brand-accent">
-                 <i className="fa-solid fa-eye"></i>
+                 <i className="fa-solid fa-brain"></i>
                </div>
                <div>
-                 <h2 className="text-sm font-black text-brand-primary dark:text-brand-lightBg uppercase tracking-tighter">Chanakya Lens</h2>
-                 <p className="text-[10px] text-brand-muted dark:text-brand-accent/60 font-bold uppercase tracking-widest">Visual Doubt Mode</p>
+                 <h2 className="text-sm font-black text-brand-primary dark:text-brand-lightBg uppercase tracking-tighter">Universal AI Guru</h2>
+                 <p className="text-[10px] text-brand-muted dark:text-brand-accent/60 font-bold uppercase tracking-widest">Active Level: {examLevel}</p>
                </div>
              </div>
-             <div className="flex gap-2">
-                <button onClick={() => setShowLive(true)} className="bg-brand-gold text-brand-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg flex items-center gap-2">
-                   <span className="w-2 h-2 bg-brand-primary rounded-full animate-pulse"></span> Voice Sadhana
-                </button>
-             </div>
+             <button onClick={() => setShowLive(true)} className="bg-brand-gold text-brand-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg flex items-center gap-2">
+                <span className="w-2 h-2 bg-brand-primary rounded-full animate-pulse"></span> Oral Sadhana
+             </button>
           </div>
 
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
             {[
-              { id: 'detailed', label: 'Conceptual', icon: 'fa-book' },
-              { id: 'short', label: 'Speed Hack', icon: 'fa-bolt' },
-              { id: 'example', label: 'Analogies', icon: 'fa-lightbulb' },
-              { id: 'neet', label: 'NEET Focus', icon: 'fa-stethoscope' },
-              { id: 'jee', label: 'JEE Pro', icon: 'fa-microchip' }
+              { id: 'detailed', label: 'Theory Dive', icon: 'fa-book' },
+              { id: 'short', label: 'Quick Fact', icon: 'fa-bolt' },
+              { id: 'example', label: 'Real Analogies', icon: 'fa-lightbulb' },
+              { id: 'neet', label: 'NEET Edge', icon: 'fa-stethoscope' },
+              { id: 'jee', label: 'JEE Tactics', icon: 'fa-microchip' }
             ].map(m => (
               <button
                 key={m.id}
@@ -230,11 +227,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
             <div className={`max-w-[85%] md:max-w-[70%] rounded-[32px] px-8 py-6 relative shadow-sm ${msg.role === 'user' ? 'bg-brand-secondary text-brand-lightBg rounded-br-none border border-brand-sage/30' : 'bg-white dark:bg-brand-secondary border border-brand-sage/20 dark:border-brand-sage/40 text-brand-text dark:text-brand-lightBg rounded-bl-none'}`}>
               {msg.media && (
                 <div className="mb-4 rounded-[24px] overflow-hidden border border-brand-sage/20 shadow-xl">
-                  {msg.media.mimeType.startsWith('image/') ? (
-                    <img src={msg.media.url} alt="Doubt media" className="w-full h-auto max-h-96 object-contain" />
-                  ) : (
-                    <video src={msg.media.url} controls className="w-full h-auto max-h-96" />
-                  )}
+                    <img src={msg.media.url} alt="Reference" className="w-full h-auto max-h-96 object-contain" />
                 </div>
               )}
               <div className="prose dark:prose-invert max-w-none text-base leading-relaxed whitespace-pre-wrap font-medium">
@@ -245,7 +238,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
                   <button onClick={() => handleSpeak(msg.text, idx)} className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isSpeakingId === idx ? 'bg-brand-accent text-brand-primary animate-pulse' : 'bg-brand-lightBg dark:bg-brand-primary/30 text-brand-muted'}`}>
                     <i className={`fa-solid ${isSpeakingId === idx ? 'fa-volume-high' : 'fa-volume-low'}`}></i>
                   </button>
-                  <button onClick={() => setBookmarkingMessage({ query: msg.originalQuery || "Visual Doubt", response: msg.text })} className="text-[10px] font-black text-brand-muted uppercase tracking-widest hover:text-brand-primary">Archive to Vault</button>
+                  <button onClick={() => setBookmarkingMessage({ query: msg.originalQuery || "Universal Query", response: msg.text })} className="text-[10px] font-black text-brand-muted uppercase tracking-widest hover:text-brand-primary">Save to Vault</button>
                 </div>
               )}
             </div>
@@ -255,7 +248,7 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
           <div className="flex justify-start">
             <div className="bg-brand-primary text-brand-lightBg px-8 py-5 rounded-[32px] rounded-bl-none flex items-center gap-4 shadow-xl border border-brand-sage/30">
               <div className="w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-xs font-black uppercase tracking-widest">Guru is analyzing your media...</span>
+              <span className="text-xs font-black uppercase tracking-widest">Guru is Synthesizing...</span>
             </div>
           </div>
         )}
@@ -266,19 +259,13 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
           {selectedMedia && (
             <div className="flex items-center gap-4 p-4 bg-brand-lightBg dark:bg-brand-primary/20 rounded-3xl border border-brand-sage/30 w-fit animate-in zoom-in-95">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-lg relative group">
-                {selectedMedia.type.startsWith('image/') ? (
-                  <img src={selectedMedia.preview} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-brand-sage/20 flex items-center justify-center">
-                    <i className="fa-solid fa-video text-brand-muted"></i>
-                  </div>
-                )}
+                <img src={selectedMedia.preview} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-brand-primary/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                    <i className="fa-solid fa-eye text-brand-lightBg text-xl animate-pulse"></i>
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                 <p className="text-[10px] font-black text-brand-primary dark:text-brand-accent uppercase">Ready for Analysis</p>
+                 <p className="text-[10px] font-black text-brand-primary dark:text-brand-accent uppercase">Media Locked</p>
                  <button onClick={() => setSelectedMedia(null)} className="text-brand-gold font-bold text-xs flex items-center gap-1 hover:underline">
                    <i className="fa-solid fa-trash-can"></i> Remove
                  </button>
@@ -294,14 +281,14 @@ const AIChat: React.FC<AIChatProps> = ({ pendingDoubt, clearPendingDoubt, examLe
                 <i className="fa-solid fa-paperclip text-xl"></i>
               </button>
             </div>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,video/*" />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
             <div className="flex-1 relative">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask Chanakya anything..."
+                placeholder={`Ask Guru about ${examLevel}...`}
                 className="w-full bg-brand-lightBg dark:bg-brand-darkBg/50 border border-brand-sage/30 dark:border-brand-sage/20 rounded-3xl px-8 py-5 outline-none focus:ring-4 focus:ring-brand-accent/20 text-base font-bold dark:text-brand-lightBg"
               />
             </div>
