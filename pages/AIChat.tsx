@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { solveDoubt, speakText, TeachingMode } from '../services/geminiService';
+import { solveDoubt, speakText, TeachingMode } from '../services/geminiService.ts';
 import ChanakyaLive from '../components/ChanakyaLive';
 import { Bookmark } from '../types.ts';
 

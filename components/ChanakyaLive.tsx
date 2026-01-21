@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
-import { encodeBase64, decodeBase64, decodeAudioData } from '../services/geminiService';
+import { encodeBase64, decodeBase64, decodeAudioData } from '../services/geminiService.ts';
 
 interface ChanakyaLiveProps {
   onClose: () => void;
